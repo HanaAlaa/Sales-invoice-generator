@@ -5,12 +5,16 @@ import com.projectmodel.Invoice;
 import com.projectmodel.Line;
 import com.projectmodel.TableModelForInvoices;
 import com.projectmodel.TableModelForLines;
+import static com.sun.org.apache.xalan.internal.lib.ExsltDatetime.date;
+import static com.sun.org.apache.xalan.internal.lib.ExsltDatetime.date;
+import static com.sun.org.apache.xalan.internal.lib.ExsltDatetime.date;
 import com.viewsales.LineDialog;
 import com.viewsales.ProjectSalesInvoiceFrame;
 import com.viewsales.SalesInvoiceDialog;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -18,6 +22,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
@@ -177,18 +182,69 @@ public class ProjectControl implements ActionListener, ListSelectionListener{
     }
     private void saveFile() {
         ArrayList<Invoice> invoices = frame.getInvoices();
+        String headers = "";
+        String lines = "";
+        for (Invoice invoice : invoices) {
+            String invCSV = invoice.getAsCSV();
+            headers += invCSV;
+            headers += "\n";
+
+            for (Line line : invoice.getLines()) {
+                String lineCSV = line.getAsCSV();
+                lines += lineCSV;
+                lines += "\n";
+            }
+        }
+        try {
+            JFileChooser fc = new JFileChooser();
+            int result = fc.showSaveDialog(frame);
+            if (result == JFileChooser.APPROVE_OPTION) {
+                File headerFile = fc.getSelectedFile();
+                FileWriter hfw = new FileWriter(headerFile);
+                hfw.write(headers);
+                hfw.flush();
+                hfw.close();
+                result = fc.showSaveDialog(frame);
+                if (result == JFileChooser.APPROVE_OPTION) {
+                    File lineFile = fc.getSelectedFile();
+                    FileWriter lfw = new FileWriter(lineFile);
+                    lfw.write(lines);
+                    lfw.flush();
+                    lfw.close();
+                }
+            }
+        } catch (Exception ex) {
+
+        }
     }
+
 
     private void createInvoiceOK() {
         String Date= salesInvoiceDialog.getInvDateField().getText();
         String Name = salesInvoiceDialog.getCustNameField().getText();
         int ID= frame.getNextID();
-        Invoice invoice= new Invoice(ID, Date, Name);
-        frame.getInvoices().add(invoice);
-        frame.getTableForModelInvoices().fireTableDataChanged();
-        salesInvoiceDialog.setVisible(false);
-        salesInvoiceDialog.dispose();
-        salesInvoiceDialog=null;
+        try {
+            String[] dateParts = Date.split("-");  // "22-05-2013" -> {"22", "05", "2013"}  xy-qw-20ij
+            if (dateParts.length < 3) {
+                JOptionPane.showMessageDialog(frame, "Wrong date format", "Error", JOptionPane.ERROR_MESSAGE);
+            } else {
+                int day = Integer.parseInt(dateParts[0]);
+                int month = Integer.parseInt(dateParts[1]);
+                int year = Integer.parseInt(dateParts[2]);
+                if (day > 31 || month > 12) {
+                    JOptionPane.showMessageDialog(frame, "Wrong date format", "Error", JOptionPane.ERROR_MESSAGE);
+                } else {
+                    Invoice invoice= new Invoice(ID, Date, Name);
+                    frame.getInvoices().add(invoice);
+                    frame.getTableForModelInvoices().fireTableDataChanged();
+                    salesInvoiceDialog.setVisible(false);
+                    salesInvoiceDialog.dispose();
+                    salesInvoiceDialog=null;
+                }
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(frame, "Wrong date format", "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private void createInvoiceCancel() {

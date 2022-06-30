@@ -61,5 +61,7 @@ public class Invoice {
     public String toString() {
         return "Invoice{" + "number=" + number + ", date=" + date + ", client=" + client + ", lines=" + lines + '}';
     }
-    
+    public String getAsCSV() {
+        return number + "," + date + "," + client;
+    }
 }

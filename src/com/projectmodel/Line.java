@@ -52,6 +52,8 @@ package com.projectmodel;
     public Invoice getInvoice() {
         return invoice;
     }
-     
+     public String getAsCSV() {
+        return invoice.getNumber() + "," + item + "," + price + "," + numberOfItems;
+    }
     
 }
